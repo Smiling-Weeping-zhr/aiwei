@@ -10,7 +10,14 @@ import torch
 DEVICE = "cuda"  # 使用CUDA
 DEVICE_ID = "0"  # CUDA设备ID，如果未设置则为空
 CUDA_DEVICE = f"{DEVICE}:{DEVICE_ID}" if DEVICE_ID else DEVICE  # 组合CUDA设备信息
-path = '/root/aiwei/InternLM'
+# 加载模型
+from transformers.utils import logging
+from openxlab.model import download
+
+logger = logging.get_logger(__name__)
+
+download(model_repo='ajupyter/EmoLLM_aiwei', 
+        output='model')
 
 # 清理GPU内存函数
 def torch_gc():
@@ -63,8 +70,8 @@ async def create_item(request: Request):
 # 主函数入口
 if __name__ == '__main__':
     # 加载预训练的分词器和模型
-    tokenizer = AutoTokenizer.from_pretrained(path, trust_remote_code=True)
-    model = AutoModelForCausalLM.from_pretrained(path, device_map="auto", trust_remote_code=True).eval()
+    tokenizer = AutoTokenizer.from_pretrained("model", trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained("model", device_map="auto", trust_remote_code=True).eval()
     model.generation_config = GenerationConfig(max_length=2048, top_p=0.7, temperature=0.95) # 可指定
     model.eval()  # 设置模型为评估模式
     # 启动FastAPI应用
