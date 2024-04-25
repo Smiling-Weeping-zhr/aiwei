@@ -1,3 +1,3 @@
 import os
 
-os.system('python api-file.py')
+os.system('streamlit run web_internlm2.py --server.address=0.0.0.0 --server.port 7860')
