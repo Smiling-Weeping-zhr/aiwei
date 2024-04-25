@@ -231,8 +231,8 @@ def main():
     model, tokenizer = load_model()
     print('load model end.')
 
-    user_avator = 'assets/user.jpg'
-    robot_avator = 'assets/robot.jpg'
+    user_avator = 'assets/user.png'
+    robot_avator = 'assets/robot.png'
 
     st.title('EmoLLM心理健康咨询师--御姐艾薇')
 
