@@ -257,7 +257,7 @@ outputs = model.generate(inputs, streamer=streamer, max_new_tokens=300)
 ```
 
 #### 推理结果
-
+![text](/assets/Picture.png)
 用时短，推理的上下文关系强，性能有显著的提升。
 ### 推理微调后大模型
 
