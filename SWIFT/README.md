@@ -209,6 +209,56 @@ CUDA_VISIBLE_DEVICES=0 swift export \
 
 ## 🔥 模型推理
 
+### intel-extension-for-transformers加速大语言模型的推理
+我们使用英特尔推出的intel-extension-for-transformers加速大语言模型的推理
+
+#### 环境准备
+```bash
+#我们使用modelscope社区上的notebook工作环境进行大模型推理
+#配置如下
+#8核 32GB 显存24G
+#预装 ModelScope Library
+#预装镜像 ubuntu22.04-cuda12.1.0-py310-torch2.3.0-tf2.16.1-1.15.0
+#安装压缩功能包
+pip install intel-extension-for-transformers
+#由于huggingface在国内的链接不太稳定，我们可以采取本地路径的方式使用大模型
+#模型文件被安装到Qwen-7B-Chat目录之中
+git lfs install
+git clone https://www.modelscope.cn/qwen/Qwen-7B-Chat.git
+```
+#### 运行代码
+```bash
+from transformers import AutoTokenizer, TextStreamer, BitsAndBytesConfig
+from intel_extension_for_transformers.transformers import AutoModelForCausalLM
+import torch
+MODEL_NAME = "./Qwen-7B-Chat"
+#使用本地路径之中的模型文件
+def create_model_and_tokenizer():
+bnb_config = BitsAndBytesConfig(
+load_in_4bit=True,
+bnb_4bit_quant_type="nf4",
+bnb_4bit_compute_dtype=torch.float16,
+)
+model = AutoModelForCausalLM.from_pretrained(
+MODEL_NAME,
+use_safetensors=True,
+quantization_config=bnb_config,
+trust_remote_code=True,
+device_map="auto",
+)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+return model, tokenizer
+prompt = "我最近心情不好，能给我一些建议吗？"
+model,tokenizer = create_model_and_tokenizer()
+inputs = tokenizer(prompt, return_tensors="pt").input_ids
+#流式输出模型推理内容，速度很快
+streamer = TextStreamer(tokenizer)
+outputs = model.generate(inputs, streamer=streamer, max_new_tokens=300)
+```
+
+#### 推理结果
+
+用时短，推理的上下文关系强，性能有显著的提升。
 ### 推理微调后大模型
 
 ```bash
