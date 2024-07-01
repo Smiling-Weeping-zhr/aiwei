@@ -209,6 +209,56 @@ CUDA_VISIBLE_DEVICES=0 swift export \
 
 ## 🔥 Model inference
 
+### intel-extension-for-transformers accelerates inference for large language models
+We use intel-extension-for-transformers to accelerate the inference of large language models
+
+#### 环境准备
+```bash
+#We use the notebook working environment on the ModelScope community for large model inference
+#The configuration is as follows
+#8 cores, 32GB video memory, 24G
+#Pre-installed Moderskopellibrary
+#Pre-installed images ubuntu22.04-cuda12.1.0-py310-torch2.3.0-tf2.16.1-1.15.0
+#Install the compression feature pack
+pip install intel-extension-for-transformers
+#Since Huggingface's link in China is not very stable, we can use the large model in the way of local paths
+#The model file is installed in the Qwen-7B-Chat directory
+git lfs install
+git clone https://www.modelscope.cn/qwen/Qwen-7B-Chat.git
+```
+#### Run the code
+```bash
+from transformers import AutoTokenizer, TextStreamer, BitsAndBytesConfig
+from intel_extension_for_transformers.transformers import AutoModelForCausalLM
+import torch
+MODEL_NAME = "./Qwen-7B-Chat"
+#Use the model file in the local path
+def create_model_and_tokenizer():
+bnb_config = BitsAndBytesConfig(
+load_in_4bit=True,
+bnb_4bit_quant_type="nf4",
+bnb_4bit_compute_dtype=torch.float16,
+)
+model = AutoModelForCausalLM.from_pretrained(
+MODEL_NAME,
+use_safetensors=True,
+quantization_config=bnb_config,
+trust_remote_code=True,
+device_map="auto",
+)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+return model, tokenizer
+prompt = "我最近心情不好，能给我一些建议吗？"
+model,tokenizer = create_model_and_tokenizer()
+inputs = tokenizer(prompt, return_tensors="pt").input_ids
+#Streaming out model inference content is fast
+streamer = TextStreamer(tokenizer)
+outputs = model.generate(inputs, streamer=streamer, max_new_tokens=300)
+```
+
+#### 推理结果
+![text](/assets/Picture.png)
+The time is short, the context relationship of inference is strong, and the performance is significantly improved.
 ### Large model after inference fine-tuning
 
 ```bash
